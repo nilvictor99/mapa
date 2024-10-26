@@ -52,6 +52,10 @@
                             class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
                             Agregar Marcadores
                         </button>
+
+                        <button @click.prevent="optimizeRoute" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
+            Calculate Optimal Route
+        </button>
                     </form>
 
                     <form @submit.prevent="addCircle" class="space-y-4 mt-6">
@@ -76,37 +80,6 @@
                         <button type="submit"
                             class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
                             Add Circle
-                        </button>
-                    </form>
-                    <!-- Route Form -->
-                    <form @submit.prevent="optimizeRoute" class="space-y-6">
-                        <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700">Start Location</label>
-                                <input v-model="form.startLocation" type="text"
-                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" required>
-                            </div>
-
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700">End Location</label>
-                                <input v-model="form.endLocation" type="text"
-                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" required>
-                            </div>
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700">Vehicle Type</label>
-                            <select v-model="form.vehicleType"
-                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
-                                <option value="truck">Truck</option>
-                                <option value="van">Van</option>
-                                <option value="car">Car</option>
-                            </select>
-                        </div>
-
-                        <button type="submit"
-                            class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
-                            Calculate Optimal Route
                         </button>
                     </form>
 
@@ -151,21 +124,17 @@ export default defineComponent({
 
     data() {
         return {
-            form: {
-                startLocation: '',
-                endLocation: '',
-                vehicleType: 'truck',
-
-            },
-            searchQuery: '',
-            autocompleteResults: [],
-            route: null,
-            markerLat: null,
-            markerLng: null,
-            circleLat: null,
-            circleLng: null,
-            circleRadius: null,
-            map: null,
+      searchQuery: '',
+      autocompleteResults: [],
+      route: null,
+      startLat: null,
+      startLng: null,
+      endLat: null,
+      endLng: null,
+      circleLat: null,
+      circleLng: null,
+      circleRadius: null,
+      map: null,
         }
     },
 
@@ -190,14 +159,24 @@ export default defineComponent({
     },
 
     methods: {
-        async optimizeRoute() {
-            try {
-                const response = await this.$inertia.post('/api/routes/optimize', this.form)
-                this.route = response.data
-            } catch (error) {
-                console.error('Error optimizing route:', error)
-            }
-        },
+    async optimizeRoute() {
+      try {
+        const response = await this.$inertia.post('python/route_obtimizer.py', {
+          start: {
+            lat: this.startLat,
+            lng: this.startLng,
+          },
+          end: {
+            lat: this.endLat,
+            lng: this.endLng,
+          },
+         
+        });
+        this.route = response.data;
+      } catch (error) {
+        console.error('Error optimizing route:', error);
+      }
+    },
 
         initializeMap() {
             this.map = L.map('map').setView([51.505, -0.09], 13);
@@ -263,7 +242,7 @@ export default defineComponent({
       };
 
       try {
-        const response = await fetch('/api/routes/optimize', {
+        const response = await fetch('routes.optimize', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

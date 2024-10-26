@@ -4,69 +4,47 @@ import numpy as np
 import pandas as pd
 from sklearn.ensemble import RandomForestRegressor
 
-def optimize_route(data):
-    # Parse input data
-    start = data['start']
-    end = data['end']
-    constraints = data.get('constraints', {})
-    
-    # Asegúrate de que las coordenadas sean las correctas
-    start_coords = (start['lat'], start['lng'])
-    end_coords = (end['lat'], end['lng'])
+# Simulando la carga del modelo, reemplaza esto con el código para cargar tu modelo entrenado
+def load_model():
+    # Cargar tu modelo aquí (ejemplo con RandomForest)
+    return RandomForestRegressor()
 
-    # Feature engineering
-    features = create_route_features(start, end, constraints)
+# Esta función se encargará de predecir la ruta
+def predict_route(start_lat, start_lng, end_lat, end_lng):
+    # Prepara los datos para la predicción
+    # Puedes ajustar este arreglo según las características de tu modelo
+    data = np.array([[start_lat, start_lng, end_lat, end_lng]])
+    
+    # Cargar el modelo
+    model = load_model()
+    
+    # Realiza la predicción
+    predicted_values = model.predict(data)
 
-    # Load pre-trained model
-    model = RandomForestRegressor()
-    # model.load('model.pkl') # Load your trained model
-    
-    # Predict optimal route
-    optimal_route = predict_route(model, features)
-    
+    # Devuelve los resultados como un diccionario
     return {
-        'optimal_route': optimal_route,
-        'estimated_time': calculate_time(optimal_route),
-        'estimated_emissions': calculate_emissions(optimal_route)
+        "estimatedTime": predicted_values[0],  # Aquí suponemos que el modelo devuelve el tiempo estimado
+        # Puedes agregar más predicciones según lo que necesites
     }
 
-def create_route_features(start, end, constraints):
-    # Create feature matrix for the route
-    features = {
-        'distance': calculate_distance(start, end),
-        'traffic_density': get_traffic_density(),
-        'weather_condition': get_weather_conditions(),
-        'road_quality': get_road_quality()
-    }
-    return pd.DataFrame([features])
-
-def predict_route(model, features):
-    # Implement route prediction logic
-    return {
-        'path': [],
-        'distance': 0,
-        'duration': 0
-    }
-
-def calculate_distance(start, end):
-    return np.linalg.norm(np.array(start) - np.array(end))
-
-def get_traffic_density():
-    return np.random.rand()
-
-def get_weather_conditions():
-    return 'Clear'
-
-def get_road_quality():
-    return 'Good'
-
-def calculate_time(optimal_route):
-    return optimal_route['duration']
-
-def calculate_emissions(optimal_route):
-    return optimal_route['distance'] * 0.2
-
+# Código para recibir la solicitud
 if __name__ == "__main__":
-    input_data = json.loads(sys.argv[1])
-    result = optimize_route(input_data)
-    print(json.dumps(result))
+    # Suponiendo que se recibe JSON a través de la entrada estándar
+    input_data = sys.stdin.read()
+    
+    # Procesar los datos de entrada
+    try:
+        data = json.loads(input_data)
+        start_lat = data['start']['lat']
+        start_lng = data['start']['lng']
+        end_lat = data['end']['lat']
+        end_lng = data['end']['lng']
+        
+        # Obtener la predicción
+        result = predict_route(start_lat, start_lng, end_lat, end_lng)
+        
+        # Imprimir el resultado como JSON
+        print(json.dumps(result))
+    
+    except Exception as e:
+        print(json.dumps({"error": str(e)}))
